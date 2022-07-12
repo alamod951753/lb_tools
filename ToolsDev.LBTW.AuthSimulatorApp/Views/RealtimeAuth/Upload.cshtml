@@ -1,0 +1,71 @@
+﻿@using ToolsDev.LBTW.AuthSimulatorApp.Models.RealtimeAuth
+@model RealtimeUploadViewModel
+@{
+    ViewData["Title"] = "即時授權 多筆上傳";
+}
+
+<div class="text-center">
+    <h2 class="display-5">@ViewData["Title"]</h2>
+
+
+    @if (ViewData["FuncOnline"] != null && ViewData["FuncOnline"].ToString() == "false")
+    {
+        <p>功能即將完成，請再稍等一下下 (/◕ヮ◕)/</p>
+    }
+    else
+    {   
+        <p>檔案上傳後，每30分鐘由批次處理資料</p>
+        <br />
+
+        <div class="div-wrapper">
+            @using (Html.BeginForm("Upload", "RealtimeAuth", FormMethod.Post, new { @enctype = "multipart/form-data", @class = "form-group form-padding", @style = "float: left; text-align: left;" }))
+            {
+                <div>
+                    <div class="list-inline">
+                        <b class="RequiredMemo">*</b>
+                        <label for="UploadFile">檔案上傳 (.csv)</label>
+                        <input name="UploadFile" type="file" class="input-text" />
+                    </div>
+                </div>
+                <button id="Submit" type="submit" class="btn-sm btn-style">上傳授權交易</button>
+                <br />
+                <br />
+
+                <div>
+                    <a href="~/Template/RealtimeAuthUpload_template.csv">Download Template</a>
+                </div>
+            }
+
+            <div style="text-align: left; float: right">
+                @if (Model.UploadTime != null)
+                {
+                    <div class="list-inline">
+                        <label for="UploadTime" class="label-title-name">上傳時間</label>
+                        <input name="UploadTime" type="text" class="input-text input-no-border" value="@(Model.UploadTime?.ToString("yyyy/MM/dd HH:mm:ss"))" readonly />
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.UploadFileName))
+                {
+                    <div class="list-inline">
+                        <label for="UploadFileName" class="label-title-name">上傳檔案</label>
+                        <input name="UploadFileName" type="text" class="input-text input-no-border" value="@Model.UploadFileName" readonly />
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.ResponseMsg))
+                {
+                    <div class="list-inline">
+                        <label for="ResponseMsg" class="label-title-name" style="vertical-align: top">回覆訊息</label>
+                        <textarea name="ResponseMsg" id="ResponseMsg" cols="35" rows="5" class="input-text" readonly>@Model.ResponseMsg</textarea>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.ResponseCode))
+                {
+                    <div class="list-inline">
+                        <label for="ResponseCode" class="label-title-name">回覆代碼</label>
+                        <input name="ResponseCode" type="text" class="input-text input-no-border" value="@Model.ResponseCode" readonly />
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>

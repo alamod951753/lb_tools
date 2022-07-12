@@ -1,0 +1,163 @@
+﻿@using ToolsDev.LBTW.AuthSimulatorApp.Models.RealtimeAuth
+@model RealtimeCreateViewModel
+@{
+    ViewData["Title"] = "即時授權 單筆";
+}
+
+<div class="text-center">
+    <h2 class="display-5">@ViewData["Title"]</h2>
+    <br />
+
+    <div class="div-wrapper">
+        @using (Html.BeginForm("Create", "RealtimeAuth", FormMethod.Post, new { @class = "form-group", @style = "float: left" }))
+        {
+            <div>
+                <div class="list-inline">
+                    <b class="RequiredMemo">*</b>
+                    <label for="MerchantID" class="label-title-name">特店代號</label>
+                    <input name="MerchantID" type="text" class="input-text input-width-fixed" value="@Model.MerchantID" />
+                </div>
+                <div class="list-inline">
+                    <b>&ensp;</b>
+                    <label for="SubMerchantID" class="label-title-name">子特店代號</label>
+                    <input name="SubMerchantID" type="text" class="input-text input-width-fixed" value="@Model.SubMerchantID" />
+                </div>
+                <div class="list-inline">
+                    <b class="RequiredMemo">*</b>
+                    <label for="TerminalID" class="label-title-name">端末機代號</label>
+                    <input name="TerminalID" type="text" class="input-text input-width-fixed" value="@Model.TerminalID" />
+                </div>
+                <div class="list-inline">
+                    <b class="RequiredMemo">*</b>
+                    <label for="OrderID" class="label-title-name">特店訂單編號</label>
+                    <input name="OrderID" type="text" class="input-text input-width-fixed" value="@Model.OrderID" />
+                </div>
+                <div class="list-inline">
+                    <b class="RequiredMemo">*</b>
+                    <label for="TransCode" class="label-title-name">交易碼</label>
+                    <select name="TransCode" id="TransCode">
+                        <option value="00">00: 購貨</option>
+                        <option value="01">01: 退貨</option>
+                        <option value="10">10: 購貨取消</option>
+                        <option value="11">11: 退貨取消</option>
+                        @*<option value="81">81: 身份驗證</option>*@
+                    </select>
+                </div>
+                <div class="list-inline" id="divUserDefine">
+                    <b class="RequiredMemo">*</b>
+                    <label for="UserDefine" class="label-title-name">原購貨授權碼</label>
+                    <input name="UserDefine" type="text" class="input-text input-width-fixed" value="@Model.UserDefine" />
+                </div>
+                <div class="list-inline">
+                    <b class="RequiredMemo">*</b>
+                    <label for="CardNbr" class="label-title-name">卡號</label>
+                    <input name="CardNbr" type="text" class="input-text input-width-fixed" maxlength="16" value="@Model.CardNbr" />
+                </div>
+                <div class="list-inline">
+                    <b class="RequiredMemo">*</b>
+                    <label for="ExpireDate" class="label-title-name">到期日</label>
+                    <input name="ExpireDate" type="text" class="input-text input-width-fixed" maxlength="4" placeholder="MMYY 西元年後2碼" value="@Model.ExpireDate" />
+                </div>
+                <div class="list-inline">
+                    <b class="RequiredMemo">*</b>
+                    <label for="CVV2" class="label-title-name">CVV2</label>
+                    <input name="CVV2" type="text" class="input-text input-width-fixed" maxlength="3" placeholder="卡片背後後3碼" value="@Model.CVV2" />
+                </div>
+                <div class="list-inline">
+                    <b class="RequiredMemo">*</b>
+                    <label for="TransAmt" class="label-title-name">請款金額</label>
+                    <input name="TransAmt" type="text" class="input-text input-width-fixed" value="@Model.TransAmt" />
+                </div>
+                <div class="list-inline">
+                    <b class="RequiredMemo">*</b>
+                    <label for="TransMode" class="label-title-name">交易模式</label>
+                    <select name="TransMode" id="TransMode">
+                        <option value="0">0: 一般授權</option>
+                        <option value="1">1: 分期</option>
+                        <option value="2">2: 紅利</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="ErrorMsg">
+                        #### LineBank 目前尚未支援分期及紅利交易 ####
+                    </label>
+                </div>
+                <!--交易模式為1,則該參數為必要參數-->
+                <div class="list-inline" id="divInstallCount">
+                    <b class="RequiredMemo">*</b>
+                    <label for="InstallCount" class="label-title-name">分期期數</label>
+                    <input name="InstallCount" type="text" class="input-text input-width-fixed" value="@Model.InstallCount" />
+                </div>
+            </div>
+            <button id="Submit" type="submit" class="btn-sm btn-style">執行授權交易</button>
+        }
+
+        <div style="text-align: left; float: right">
+            @if (!string.IsNullOrEmpty(Model.ResponseMsg))
+            {
+                <div class="list-inline">
+                    <label for="ResponseMsg" class="label-title-name" style="vertical-align: top">回覆訊息</label>
+                    <textarea name="ResponseMsg" id="ResponseMsg" cols="35" rows="5" class="input-text" readonly >@Model.ResponseMsg</textarea>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(Model.ResponseCode))
+            {
+                <div class="list-inline">
+                    <label for="ResponseCode" class="label-title-name">回覆代碼</label>
+                    <input name="ResponseCode" type="text" class="input-text input-no-border" value="@Model.ResponseCode" readonly />
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(Model.ApproveCode))
+            {
+                <div class="list-inline">
+                    <label for="ApproveCode" class="label-title-name label-title-bg">授權碼</label>
+                    <input name="ApproveCode" type="text" class="input-text input-no-border" value="@Model.ApproveCode" readonly />
+                </div>
+                <div class="list-inline">
+                    <label for="BatchNo" class="label-title-name label-title-bg">交易批次序號</label>
+                    <input name="BatchNo" type="text" class="input-text input-no-border" value="@Model.BatchNo" readonly />
+                </div>
+                <div class="list-inline">
+                    <label for="RRN" class="label-title-name label-title-bg">交易序號</label>
+                    <input name="RRN" type="text" class="input-text input-no-border" value="@Model.RRN" readonly />
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+    $().ready(function () {
+        $("#TransCode").val("@Model.TransCode");
+        $("#TransMode").val("@Model.TransMode");
+
+        InstallmentMode();
+        AuthCancelMode();
+    });
+
+    $("#TransMode").change(function () {
+        InstallmentMode();
+    });
+
+    function InstallmentMode() {
+        var transModeVal = $("#TransMode").val();
+        if (transModeVal == 1) {
+            $("#divInstallCount").show();
+        } else {
+            $("#divInstallCount").hide();
+        }
+    }
+
+    $("#TransCode").change(function () {
+        AuthCancelMode();
+    });
+
+    function AuthCancelMode() {
+        var transCodeVal = $("#TransCode").val();
+        if (transCodeVal == '00') {
+            $("#divUserDefine").hide();
+        } else {
+            $("#divUserDefine").show();
+        }
+    }
+</script>

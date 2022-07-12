@@ -1,0 +1,247 @@
+﻿@using ToolsDev.LBTW.AuthSimulatorApp.Models.RealtimeAuth
+@using ToolsDev.LBTW.AuthSimulatorApp.Enums
+@using ToolsDev.Utilities.Helper;
+
+@model RealtimeQueryViewModel
+@{
+    ViewData["Title"] = "即時授權 查詢";
+}
+
+<div class="text-center">
+    <h2 class="display-5">@ViewData["Title"]</h2>
+    <br />
+
+    <div>
+        @using (Html.BeginForm("Query", "RealtimeAuth", FormMethod.Post, new { @class = "form-group" }))
+        {
+            <div class="div-wrapper">
+                <div class="list-inline">
+                    <label for="Mode" class="label-title-name">Mode</label>
+                    <select name="Mode" id="Mode">
+                        <option value="0">--- Please select ---</option>
+                        <option value="1">單筆</option>
+                        <option value="2">多筆上傳</option>
+                    </select>
+                </div>
+                <div class="list-inline all-field">
+                    <label for="CreateDate" class="label-title-name">建檔日期</label>
+                    <input name="CreateDate" type="text" class="input-text input-width-fixed" placeholder="yyyy/MM/dd" maxlength="10" value="@Model.CreateDate" />
+                </div>
+                <div class="list-inline single-create-api-field">
+                    <label for="TerminalID" class="label-title-name">端末機代號</label>
+                    <input name="TerminalID" type="text" class="input-text input-width-fixed" value="@Model.TerminalID" />
+                </div>
+                <div class="list-inline single-create-api-field">
+                    <label for="ApproveCode" class="label-title-name">授權碼</label>
+                    <input name="ApproveCode" type="text" class="input-text input-width-fixed" maxlength="10" value="@Model.ApproveCode" />
+                </div>
+                <div class="list-inline single-create-api-field">
+                    <label for="TransCode" class="label-title-name">交易碼</label>
+                    <select name="TransCode" id="TransCode">
+                        <option value="-1">--- Select ---</option>
+                        <option value="00">00: 購貨</option>
+                        <option value="01">01: 退貨</option>
+                        <option value="10">10: 購貨取消</option>
+                        <option value="11">11: 退貨取消</option>
+                        @*<option value="81">81: 身份驗證</option>*@
+                    </select>
+                </div>
+                <div class="list-inline single-create-api-field">
+                    <label for="CardNbr" class="label-title-name">卡號</label>
+                    <input name="CardNbr" type="text" class="input-text input-width-fixed" maxlength="16" value="@Model.CardNbr" />
+                </div>
+                <div class="list-inline single-create-api-field">
+                    <label for="TransMode" class="label-title-name">交易模式</label>
+                    <select name="TransMode" id="TransMode">
+                        <option value="-1">--- Select ---</option>
+                        <option value="0">0: 一般授權</option>
+                        <option value="1">1: 分期</option>
+                        <option value="2">2: 紅利</option>
+                    </select>
+                </div>
+                <div class="list-inline single-create-api-field">
+                    <label for="TransAmt" class="label-title-name">請款金額</label>
+                    <input name="TransAmt" type="text" class="input-text input-width-fixed" value="@Model.TransAmt" />
+                </div>
+            </div>
+            <button id="Submit" type="submit" class="btn-sm btn-style">查詢</button>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.ErrorMsg))
+        {
+            <label class="ErrorMsg">@Model.ErrorMsg</label>
+        }
+
+        <div style="text-align: left;">
+            @if (Model.ApiList != null && Model.ApiList.Count > 0)
+            {
+                <table class="table table-sm table-style">
+                    <thead>
+                        <tr class="table-success">
+                            <th>特店代號</th>
+                            <th>端末機代號</th>
+                            <th>特店訂單編號</th>
+                            <th>交易碼</th>
+                            <th>交易模式</th>
+                            <th>卡號</th>
+                            <th>交易金額</th>
+                            <th>授權碼</th>
+                            <th>處理時間</th>
+                            <th>回覆碼及訊息</th>
+                            @*<th>批次編號</th>*@
+                            @*<th>建檔人員</th>*@
+                        </tr>
+                    </thead>
+                    @foreach (var item in Model.ApiList.OrderByDescending(x => x.Seq))
+                    {
+                        <tr>
+                            <td>@item.MerchantID</td>
+                            <td>@item.TerminalID</td>
+                            <td>@item.OrderID</td>
+                            <td>
+                                @switch (item.TransCode)
+                                {
+                                    case "00":
+                                        <label class="table-sm-label">購貨</label>
+                                        break;
+                                    case "01":
+                                        <label class="table-sm-label">退貨</label>
+                                        break;
+                                    case "10":
+                                        <label class="table-sm-label">購貨取消</label>
+                                        break;
+                                    case "11":
+                                        <label class="table-sm-label">退貨取消</label>
+                                        break;
+                                    @*case "81":
+                                        <label class="table-sm-label">身份驗證</label>
+                                        break;*@
+                                }
+                            </td>
+                            <td>@(((TransMode)item.TransMode).GetDescription())</td>
+                            <td>@item.CardNbr</td>
+                            <td>@item.TransAmt</td>
+                            <td>@item.ApproveCode</td>
+                            <td>@(item.RequestDate?.ToString("yyyy/MM/dd HH:mm:ss"))</td>
+                            <td>@item.ResponseCode @item.ResponseMsg</td>
+                            @*<td>@item.BatchNo</td>*@
+                            @*<td>@item.CreateUser</td>*@
+                        </tr>
+                    }
+                </table>
+            }
+
+            @if (Model.BatchApiList != null && Model.BatchApiList.Count > 0)
+            {
+                <table class="table table-sm table-style">
+                    <thead>
+                        <tr class="table-success">
+                            <th>檔案上傳日期</th>
+                            <th>檔名</th>
+                            @*<th>建檔人員</th>*@
+                            <th>檔案總筆數</th>
+                            <th>開始處理時間</th>
+                            <th>已處理筆數</th>
+                            <th>授權回覆成功筆數</th>
+                            <th>授權回覆拒絕筆數</th>
+                            <th>處理完成時間</th>
+                            <th>備註</th>
+                        </tr>
+                    </thead>
+                    @foreach (var item in Model.BatchApiList.OrderByDescending(x => x.UploadDate))
+                    {
+                        var failCntStyle = "";
+                        if (item.FailedCnt > 0)
+                        {
+                            failCntStyle = "color: red; font-weight: bold;";
+                        }
+                        <tr>
+                            <td>
+                                <input type="hidden" value="@item.BatchSeq" />
+                                @item.UploadDate
+                            </td>
+                            <td>@item.FilePath.Split('\\')[item.FilePath.Split('\\').Length - 1]</td>
+                            @*<td>@item.UploadUser</td>*@
+                            <td>@item.DataCnt</td>
+                            <td>@item.ProcessStartDate</td>
+                            <td>@item.ProcessCnt</td>
+                            <td>@item.SuccessCnt</td>
+                            <td id="FailOverall_@item.BatchSeq" onclick="ClickFailOverall(this, @item.FailedCnt)">
+                                @if (item.FailedCnt > 0)
+                                {
+                                    <a href="#" style="@failCntStyle">@item.FailedCnt</a>
+                                }
+                                else
+                                {
+                                    <div>@item.FailedCnt</div>
+                                }
+                            </td>
+                            <td>@item.ProcessEndDate</td>
+                            <td>@item.ProcessMemo</td>
+                        </tr>
+                        if (item.BatchFailDetailList.Count > 0)
+                        {
+                            <tr id="FailDetail_@item.BatchSeq" style="display: none;">
+                                <td colspan="9" style="background-color: palegreen;">
+                                    <table style="border: 3px solid palegreen">
+                                        <thead>
+                                            <tr>
+                                                <th style="min-width: 250px;">回覆碼及訊息</th>
+                                                <th>特店訂單編號</th>
+                                            </tr>
+                                        </thead>
+                                        @foreach (var failItem in item.BatchFailDetailList)
+                                        {
+                                            <tr>
+                                                <td>@failItem.ResponseCode @failItem.ResponseMsg</td>
+                                                <td>@(failItem.OrderID.Substring(0, failItem.OrderID.Length - 2))</td>
+                                            </tr>
+                                        }
+                                    </table>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </table>
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+    $().ready(function () {
+        $("#Mode").val("@Model.Mode")
+        $("#TransCode").val("@Model.TransCode");
+        $("#TransMode").val("@Model.TransMode");
+
+        ChangeMode();
+    });
+
+    $("#Mode").change(function () {
+        ChangeMode();
+    });
+
+    function ChangeMode() {
+        var modeVal = $("#Mode").val();
+        if (modeVal == 0) {
+            $(".all-field").hide();
+            $(".single-create-api-field").hide();
+        }
+        if (modeVal == 1) {
+            $(".all-field").show();
+            $(".single-create-api-field").show();
+        }
+        if (modeVal == 2) {
+            $(".all-field").show();
+            $(".single-create-api-field").hide();
+        }
+    }
+
+    function ClickFailOverall(obj, failCnt) {
+        if (failCnt > 0) {
+            var id = $(obj).attr('id');
+            var detailId = id.replace('FailOverall_', 'FailDetail_');
+            $("#" + detailId).toggle();
+        }
+    }
+</script>

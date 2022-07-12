@@ -1,0 +1,37 @@
+﻿@using ToolsDev.LBTW.AuthSimulatorApp.Models.BatchAuth;
+@model UploadViewModel
+@{
+    ViewData["Title"] = "批次授權 上傳";
+}
+
+<div class="text-center">
+    <h2 class="display-5">@ViewData["Title"]</h2>
+    <br />
+
+    @if (!string.IsNullOrEmpty(Model.ReturnCode))
+    {
+        if (Model.ReturnCode == "0000")
+        {
+            <div class="list-group" style="background-color: #32cb55; height: 50px; line-height: 50px">
+                <b>@Model.ReturnMessage</b>
+            </div>
+            <br />
+        }
+        else
+        {
+            <div class="list-group" style="background-color: #e24f27; height: 50px; line-height: 50px">
+                <b>@Model.ReturnMessage</b>
+            </div>
+            <br />
+        }
+    }
+
+    @using (Html.BeginForm("Upload", "BatchAuth", FormMethod.Post, new { @class = "form-group", @enctype = "multipart/form-data" }))
+    {
+        <div class="list-inline">
+            <label for="UploadFile">Upload File: </label>
+            <input name="UploadFile" type="file" class="input-text" />
+        </div>
+        <button id="Submit" type="submit" class="btn-sm">Submit</button>
+    }
+</div>
