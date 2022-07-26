@@ -16,5 +16,12 @@ namespace ToolsDev.Repository.Dto.AuthSimulatorApp
         public decimal? TransAmt { get; set; }
         public int? TransMode { get; set; }
         public string TransCode { get; set; }
+        public int PageIndex { get; set; }
+        public int PageSize { get; set; }
+        public RequestGetApiList_Dto()
+        {
+            PageIndex = -1;
+            PageSize = 10;
+        }
     }
 }

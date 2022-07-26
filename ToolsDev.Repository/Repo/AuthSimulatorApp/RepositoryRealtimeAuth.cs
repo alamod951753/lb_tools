@@ -143,6 +143,7 @@ namespace ToolsDev.Repository.Repo.AuthSimulatorApp
 										ON A.RESPONSE_CODE=B.RESPONSE_CODE
 									WHERE ISNULL(BATCH_SEQ, '')=''		--QUERY SINGLE
 									{sqlCondition}
+									ORDER BY A.SEQ DESC
 							";
                 using (DbProvider dbProvider = new DbProvider("CARDToolConnectionString"))
                 {
@@ -232,6 +233,10 @@ namespace ToolsDev.Repository.Repo.AuthSimulatorApp
 										WHERE A.RESPONSE_CODE=D.RESPONSE_CODE
 										FOR XML PATH('')
 								) AS ORDER_ID
+								, (	SELECT PROCESS_END_DATE
+									FROM REALTIME_AUTH_BATCH
+									WHERE SEQ=@BatchSeq
+								) AS REQUEST_DATE
 								FROM #TEMP_BATCH_SEQ D
 								GROUP BY D.RESPONSE_CODE, D.RESPONSE_MSG 
 							";

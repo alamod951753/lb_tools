@@ -16,5 +16,7 @@ namespace ToolsDev.Service.Entity.RealtimeService
         public decimal? TransAmt { get; set; }
         public int? TransMode { get; set; }
         public string TransCode { get; set; }
+        public int PageIndex { get; set; }
+        public int PageSize { get; set; }
     }
 }

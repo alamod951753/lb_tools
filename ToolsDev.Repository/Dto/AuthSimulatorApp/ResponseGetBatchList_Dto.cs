@@ -19,5 +19,6 @@ namespace ToolsDev.Repository.Dto.AuthSimulatorApp
         public int? PROCESS_CNT { get; set; }
         public int? SUCCESS_CNT { get; set; }
         public int? FAILED_CNT { get; set; }
+        public string TERMINAL_ID  { get; set; }
     }
 }
