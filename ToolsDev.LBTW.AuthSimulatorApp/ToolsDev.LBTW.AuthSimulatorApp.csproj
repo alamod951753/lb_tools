@@ -161,6 +161,7 @@
     <Content Include="fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
+    <Content Include="Images\ajax-loader.gif" />
     <Content Include="Images\logo.png" />
     <Content Include="Scripts\additional-methods.js" />
     <Content Include="Scripts\additional-methods.min.js" />
@@ -207,6 +208,7 @@
     <Content Include="Views\RealtimeAuth\Upload.cshtml" />
     <Content Include="TFB_EPG\Serverlist.ini" />
     <Content Include="Template\RealtimeAuthUpload_template.csv" />
+    <Content Include="Views\RealtimeAuth\ApiListRows.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

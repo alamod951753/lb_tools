@@ -25,15 +25,15 @@
                 </div>
                 <div class="list-inline all-field">
                     <label for="CreateDate" class="label-title-name">建檔日期</label>
-                    <input name="CreateDate" type="text" class="input-text input-width-fixed" placeholder="yyyy/MM/dd" maxlength="10" value="@Model.CreateDate" />
+                    <input name="CreateDate" type="text" class="input-text input-width-fixed" placeholder="yyyy/MM/dd" maxlength="10" id="CreateDate" value="@Model.CreateDate" />
                 </div>
                 <div class="list-inline single-create-api-field">
                     <label for="TerminalID" class="label-title-name">端末機代號</label>
-                    <input name="TerminalID" type="text" class="input-text input-width-fixed" value="@Model.TerminalID" />
+                    <input name="TerminalID" type="text" class="input-text input-width-fixed" id="TerminalID" value="@Model.TerminalID" />
                 </div>
                 <div class="list-inline single-create-api-field">
                     <label for="ApproveCode" class="label-title-name">授權碼</label>
-                    <input name="ApproveCode" type="text" class="input-text input-width-fixed" maxlength="10" value="@Model.ApproveCode" />
+                    <input name="ApproveCode" type="text" class="input-text input-width-fixed" maxlength="10" id="ApproveCode" value="@Model.ApproveCode" />
                 </div>
                 <div class="list-inline single-create-api-field">
                     <label for="TransCode" class="label-title-name">交易碼</label>
@@ -48,7 +48,7 @@
                 </div>
                 <div class="list-inline single-create-api-field">
                     <label for="CardNbr" class="label-title-name">卡號</label>
-                    <input name="CardNbr" type="text" class="input-text input-width-fixed" maxlength="16" value="@Model.CardNbr" />
+                    <input name="CardNbr" type="text" class="input-text input-width-fixed" maxlength="16" id="CardNbr" value="@Model.CardNbr" />
                 </div>
                 <div class="list-inline single-create-api-field">
                     <label for="TransMode" class="label-title-name">交易模式</label>
@@ -61,7 +61,7 @@
                 </div>
                 <div class="list-inline single-create-api-field">
                     <label for="TransAmt" class="label-title-name">請款金額</label>
-                    <input name="TransAmt" type="text" class="input-text input-width-fixed" value="@Model.TransAmt" />
+                    <input name="TransAmt" type="text" class="input-text input-width-fixed" id="TransAmt" value="@Model.TransAmt" />
                 </div>
             </div>
             <button id="Submit" type="submit" class="btn-sm btn-style">查詢</button>
@@ -75,6 +75,14 @@
         <div style="text-align: left;">
             @if (Model.ApiList != null && Model.ApiList.Count > 0)
             {
+                <input type="hidden" id="hd_Mode" value="@Model.Mode" />
+                <input type="hidden" id="hd_TerminalID" value="@Model.TerminalID" />
+                <input type="hidden" id="hd_CreateDate" value="@Model.CreateDate" />
+                <input type="hidden" id="hd_ApproveCode" value="@Model.ApproveCode" />
+                <input type="hidden" id="hd_CardNbr" value="@Model.CardNbr" />
+                <input type="hidden" id="hd_TransAmt" value="@Model.TransAmt" />
+                <input type="hidden" id="hd_TransCode" value="@Model.TransCode" />
+                <input type="hidden" id="hd_TransMode" value="@Model.TransMode" />
                 <table class="table table-sm table-style">
                     <thead>
                         <tr class="table-success">
@@ -92,42 +100,11 @@
                             @*<th>建檔人員</th>*@
                         </tr>
                     </thead>
-                    @foreach (var item in Model.ApiList.OrderByDescending(x => x.Seq))
-                    {
-                        <tr>
-                            <td>@item.MerchantID</td>
-                            <td>@item.TerminalID</td>
-                            <td>@item.OrderID</td>
-                            <td>
-                                @switch (item.TransCode)
-                                {
-                                    case "00":
-                                        <label class="table-sm-label">購貨</label>
-                                        break;
-                                    case "01":
-                                        <label class="table-sm-label">退貨</label>
-                                        break;
-                                    case "10":
-                                        <label class="table-sm-label">購貨取消</label>
-                                        break;
-                                    case "11":
-                                        <label class="table-sm-label">退貨取消</label>
-                                        break;
-                                    @*case "81":
-                                        <label class="table-sm-label">身份驗證</label>
-                                        break;*@
-                                }
-                            </td>
-                            <td>@(((TransMode)item.TransMode).GetDescription())</td>
-                            <td>@item.CardNbr</td>
-                            <td>@item.TransAmt</td>
-                            <td>@item.ApproveCode</td>
-                            <td>@(item.RequestDate?.ToString("yyyy/MM/dd HH:mm:ss"))</td>
-                            <td>@item.ResponseCode @item.ResponseMsg</td>
-                            @*<td>@item.BatchNo</td>*@
-                            @*<td>@item.CreateUser</td>*@
-                        </tr>
-                    }
+                    <tbody id="trow">
+                        @{ 
+                            Html.RenderAction("ApiListRows", "RealtimeAuth", new { Model = Model });
+                        }
+                    </tbody>
                 </table>
             }
 
@@ -169,7 +146,7 @@
                             <td id="FailOverall_@item.BatchSeq" onclick="ClickFailOverall(this, @item.FailedCnt)">
                                 @if (item.FailedCnt > 0)
                                 {
-                                    <a href="#" style="@failCntStyle">@item.FailedCnt</a>
+                                    <a href="javascript:void(0)" style="@failCntStyle">@item.FailedCnt</a>
                                 }
                                 else
                                 {
@@ -204,17 +181,84 @@
                     }
                 </table>
             }
+      
+            <div id="loadingDiv" style="text-align: center; display: none; margin-bottom: 20px;">
+                <img src="~/Images/ajax-loader.gif" height="100" />
+            </div>
+
+            <div id="noMoreDataDiv" style="text-align: center; display: none; margin-bottom: 20px; color: gray;">
+                No More Data.
+            </div>
         </div>
     </div>
 </div>
 
 <script>
     $().ready(function () {
+        //control item
         $("#Mode").val("@Model.Mode")
         $("#TransCode").val("@Model.TransCode");
         $("#TransMode").val("@Model.TransMode");
 
+        //selece mode change
         ChangeMode();
+
+        //ajax infinite scroll query
+        var pageindex = 0;
+        var noMoreData = false;
+        var model = JSON.stringify("@Model.ToJsonString()");
+
+        $(window).on("scroll", function () {
+            var docHeight = $(document).height();
+            var winScrolled = $(window).height() + $(window).scrollTop();
+            if ((docHeight - winScrolled) < 1) {
+                console.log("module scrolled to bottom");
+
+                //單筆
+                if ($("#Mode").val() == 1) {
+                    if (!noMoreData) {
+                        pageindex = pageindex + 1;
+                        console.log("PageIndex: " + pageindex);
+                        var objPost = {
+                            pageindex: pageindex,
+                            Mode: $("#hd_Mode").val(),
+                            TerminalID: $("#hd_TerminalID").val(),
+                            CreateDate: $("#hd_CreateDate").val(),
+                            ApproveCode: $("#hd_ApproveCode").val(),
+                            CardNbr: $("#hd_CardNbr").val(),
+                            TransAmt: $("#hd_TransAmt").val(),
+                            TransMode: $("#hd_TransMode").val(),
+                            TransCode: $("#hd_TransCode").val()
+                        };
+                        //console.log(objPost);
+                        $("#loadingDiv").show();
+
+                        $.ajax({
+                            type: "POST",
+                            url: "/RealtimeAuth/QueryInfiniteScrollApiList",
+                            data: JSON.stringify(objPost),
+                            contentType: "application/json; charset=utf-8",
+                            dataType: "json",
+                            success: function (data) {
+                                noMoreData = data.NoMoreData;
+                                $("#trow").append(data.HtmlString);
+                                $("#loadingDiv").hide();
+                            },
+                            failure: function (response) {
+                                $("#loadingDiv").hide();
+                                console.log(response.responseText);
+                            },
+                            error: function (response) {
+                                $("#loadingDiv").hide();
+                                console.log(response.responseText);
+                            }
+                        })
+                    } else {
+                        $("#noMoreDataDiv").show();
+                    }
+                }
+            }
+        });
     });
 
     $("#Mode").change(function () {

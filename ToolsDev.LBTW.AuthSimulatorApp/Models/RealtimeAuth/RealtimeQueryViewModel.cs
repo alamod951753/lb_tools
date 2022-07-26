@@ -26,4 +26,10 @@ namespace ToolsDev.LBTW.AuthSimulatorApp.Models.RealtimeAuth
             BatchApiList = new List<RealtimeAuthBatchQueryEntity>();
         }
     }
+
+    public class JsonModel
+    {
+        public string HtmlString { get; set; }
+        public bool NoMoreData { get; set; }
+    }
 }

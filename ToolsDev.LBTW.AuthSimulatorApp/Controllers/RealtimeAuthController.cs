@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Web.Mvc;
 using ToolsDev.LBTW.AuthSimulatorApp.Models.RealtimeAuth;
@@ -18,6 +19,7 @@ namespace ToolsDev.LBTW.AuthSimulatorApp.Controllers
     {
         private IRealtimeService realtimeService;
         private Logger logger = LogManager.GetCurrentClassLogger();
+        private int pageSize = 10;
 
         public RealtimeAuthController()
         {
@@ -258,7 +260,8 @@ namespace ToolsDev.LBTW.AuthSimulatorApp.Controllers
                     CardNbr = model.CardNbr,
                     TransAmt = model.TransAmt,
                     TransMode = model.TransMode,
-                    TransCode = model.TransCode
+                    TransCode = model.TransCode,
+                    PageSize = pageSize
                 });
 
                 if (resultEntity != null && resultEntity.Success)
@@ -294,7 +297,7 @@ namespace ToolsDev.LBTW.AuthSimulatorApp.Controllers
                     }
                     else
                     {
-                        foreach (var item in model.BatchApiList)
+                        foreach (var item in model.BatchApiList.OrderBy(x => x.BatchSeq))
                         {
                             if (item.FailedCnt > 0)
                             {
@@ -315,6 +318,72 @@ namespace ToolsDev.LBTW.AuthSimulatorApp.Controllers
             }
 
             return View(model);
+        }
+
+        [HttpPost]
+        public ActionResult QueryInfiniteScrollApiList(int pageindex, RealtimeQueryViewModel model)
+        {
+            System.Threading.Thread.Sleep(700);
+            var resultEntity = realtimeService.GetApiList(new RequestGetApiListEntity()
+            {
+                TerminalID = model.TerminalID,
+                CreateDate = model.CreateDate,
+                CreateUser = model.CreateUser,
+                ApproveCode = model.ApproveCode,
+                CardNbr = model.CardNbr,
+                TransAmt = model.TransAmt,
+                TransMode = model.TransMode,
+                TransCode = model.TransCode,
+                PageIndex = pageindex,
+                PageSize = pageSize
+            });
+
+            if (resultEntity != null && resultEntity.Success)
+            {
+                model.ApiList = ((List<RealtimeAuthApiEntity>)resultEntity?.ResultObject);
+                if (model.ApiList != null && model.ApiList.Count == 0)
+                {
+                    model.ErrorMsg = $"查無資料";
+                }
+            }
+            else
+            {
+                model.ErrorMsg = $"查詢失敗 ( ﾟдﾟ) 請再試一次，或找資訊人員救援 (~_~メ)";
+                logger.Error($"Query failed, {resultEntity.ToJsonString()}");
+            }
+
+            JsonModel jsonmodel = new JsonModel
+            {
+                NoMoreData = model.ApiList.Count < pageSize,
+                HtmlString = RenderPartialViewtostring("ApiListRows", model)
+            };
+            return Json(jsonmodel);
+        }
+
+        protected string RenderPartialViewtostring(string Viewname, object model)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(Viewname))
+                    Viewname = ControllerContext.RouteData.GetRequiredString("action");
+                ViewData.Model = model;
+                using (StringWriter sw = new StringWriter())
+                {
+                    ViewEngineResult viewresult = ViewEngines.Engines.FindPartialView(ControllerContext, Viewname);
+                    ViewContext viewcontext = new ViewContext(ControllerContext, viewresult.View, ViewData, TempData, sw);
+                    viewresult.View.Render(viewcontext, sw);
+                    return sw.GetStringBuilder().ToString();
+                }
+            }
+            catch (Exception ex)
+            {
+                return ex.ToJsonString();
+            }
+        }
+
+        public ActionResult ApiListRows(RealtimeQueryViewModel model)
+        {
+            return PartialView(model);
         }
 
         private string CheckModelState()

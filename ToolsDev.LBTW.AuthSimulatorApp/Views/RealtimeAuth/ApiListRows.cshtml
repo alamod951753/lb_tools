@@ -1,0 +1,41 @@
+﻿@using ToolsDev.LBTW.AuthSimulatorApp.Enums
+@using ToolsDev.Utilities.Helper;
+@model ToolsDev.LBTW.AuthSimulatorApp.Models.RealtimeAuth.RealtimeQueryViewModel
+
+
+@foreach (var item in Model.ApiList)
+{
+    <tr>
+        <td>@item.MerchantID</td>
+        <td>@item.TerminalID</td>
+        <td>@item.OrderID</td>
+        <td>
+            @switch (item.TransCode)
+            {
+                case "00":
+                    <label class="table-sm-label">購貨</label>
+                    break;
+                case "01":
+                    <label class="table-sm-label">退貨</label>
+                    break;
+                case "10":
+                    <label class="table-sm-label">購貨取消</label>
+                    break;
+                case "11":
+                    <label class="table-sm-label">退貨取消</label>
+                    break;
+                @*case "81":
+                    <label class="table-sm-label">身份驗證</label>
+                    break;*@
+            }
+        </td>
+        <td>@(((TransMode)item.TransMode).GetDescription())</td>
+        <td>@item.CardNbr</td>
+        <td>@item.TransAmt</td>
+        <td>@item.ApproveCode</td>
+        <td>@(item.RequestDate?.ToString("yyyy/MM/dd HH:mm:ss"))</td>
+        <td>@item.ResponseCode @item.ResponseMsg</td>
+        @*<td>@item.BatchNo</td>*@
+        @*<td>@item.CreateUser</td>*@
+    </tr>
+}
