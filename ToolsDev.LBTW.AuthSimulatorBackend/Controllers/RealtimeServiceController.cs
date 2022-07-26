@@ -1,5 +1,6 @@
 ﻿using NLog;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Web.Http;
 using ToolsDev.LBTW.AuthSimulatorBackend.Models.RealtimeService;
@@ -15,6 +16,9 @@ namespace ToolsDev.LBTW.AuthSimulatorBackend.Controllers
     {
         private IRepositoryRealtimeAuth repositoryRealtimeAuth;
         private Logger logger = LogManager.GetCurrentClassLogger();
+        private string apiListCacheKey = "RealtimeService_ApiList_";
+        private string batchListCacheKey = "RealtimeService_BatchList_";
+        private string batchFailDetailsCacheKey = "RealtimeService_BatchFailDetails_";
 
         public RealtimeServiceController()
         {
@@ -65,6 +69,9 @@ namespace ToolsDev.LBTW.AuthSimulatorBackend.Controllers
                 USER_DEFINE = model.UserDefine
             });
 
+            CacheHelper.Remove(apiListCacheKey);
+            CacheHelper.RemoveKeysLike($"{apiListCacheKey}{DateTime.Now.ToString("yyyyMMdd")}");
+
             return Ok(id);
         }
 
@@ -107,6 +114,9 @@ namespace ToolsDev.LBTW.AuthSimulatorBackend.Controllers
                 USER_DEFINE = x.UserDefine
             }).ToList();
 
+            CacheHelper.Remove(apiListCacheKey);
+            CacheHelper.RemoveKeysLike($"{apiListCacheKey}{DateTime.Now.ToString("yyyyMMdd")}");
+
             var result = repositoryRealtimeAuth.InsertApiList(apis);
             return Ok(result);
         }
@@ -123,6 +133,9 @@ namespace ToolsDev.LBTW.AuthSimulatorBackend.Controllers
                 PROCESS_START_DATE = model.ProcessStartDate,
                 PROCESS_END_DATE = model.ProcessEndDate
             });
+
+            CacheHelper.Remove(batchListCacheKey);
+            CacheHelper.RemoveKeysLike($"{batchListCacheKey}{DateTime.Now.ToString("yyyyMMdd")}");
 
             return Ok(id);
         }
@@ -144,17 +157,38 @@ namespace ToolsDev.LBTW.AuthSimulatorBackend.Controllers
 
             try
             {
-                var apiList = repositoryRealtimeAuth.GetApiList(new RequestGetApiList_Dto()
+                string cacheDate = "";
+                if (!string.IsNullOrEmpty(model.CreateDate))
                 {
-                    TerminalID = model.TerminalID,
-                    RequestDate = model.CreateDate,
-                    CreateUser = model.CreateUser,
-                    ApproveCode = model.ApproveCode,
-                    CardNbr = model.CardNbr,
-                    TransAmt = model.TransAmt,
-                    TransMode = model.TransMode,
-                    TransCode = model.TransCode
-                });
+                    cacheDate = model.CreateDate.Replace(@"/", "");
+                }
+                string cacheKey = $"{apiListCacheKey}{cacheDate}";
+                var apiList = new List<RealtimeAuthApi_Dto>();
+
+                if (CacheHelper.Exists(cacheKey))
+                {
+                    apiList = CacheHelper.Get<List<RealtimeAuthApi_Dto>>(cacheKey);
+                }
+                else
+                {
+                    apiList = repositoryRealtimeAuth.GetApiList(new RequestGetApiList_Dto()
+                    {
+                        RequestDate = model.CreateDate
+                    });
+
+                    CacheHelper.Set(cacheKey, apiList);
+                }
+
+                Func<RealtimeAuthApi_Dto, bool> predicate = (x =>
+                    (!string.IsNullOrEmpty(model.TerminalID) ? x.TERMINAL_ID == model.TerminalID : true) &&
+                    (!string.IsNullOrEmpty(model.CreateUser) ? x.CREATE_USER == model.CreateUser : true) &&
+                    (!string.IsNullOrEmpty(model.ApproveCode) ? x.APPROVE_CODE == model.ApproveCode : true) &&
+                    (!string.IsNullOrEmpty(model.CardNbr) ? x.CARD_NBR == model.CardNbr : true) &&
+                    ((model.TransAmt != null && Math.Abs((decimal)model.TransAmt) > 0) ? x.TRANS_AMT == model.TransAmt : true) &&
+                    ((model.TransMode != null && model.TransMode > -1) ? x.TRANS_MODE == model.TransMode : true) &&
+                    ((!string.IsNullOrEmpty(model.TransCode) && model.TransCode != "-1") ? x.TRANS_CODE == model.TransCode : true)
+                );
+                apiList = apiList.Where(predicate).Skip(model.PageIndex * model.PageSize).Take(model.PageSize).ToList();
 
                 result = new Result()
                 {
@@ -182,14 +216,45 @@ namespace ToolsDev.LBTW.AuthSimulatorBackend.Controllers
         {
             Result result;
 
+            if (model == null)
+            {
+                return Ok(new Result()
+                {
+                    Success = false,
+                    ResultCode = "9999",
+                    ResultMsg = "request model null error"
+                });
+            }
+
             try
             {
-                var batchList = repositoryRealtimeAuth.GetBatchList(new RequestGetBatchList_Dto()
+                string cacheDate = "";
+                if (!string.IsNullOrEmpty(model.UploadDate))
                 {
-                    TerminalID = model.TerminalID,
-                    UploadDate = model.UploadDate,
-                    UploadUser = model.UploadUser
-                });
+                    cacheDate = model.UploadDate.Replace(@"/", "");
+                }
+                string cacheKey = $"{batchListCacheKey}{cacheDate}";
+                var batchList = new List<ResponseGetBatchList_Dto>();
+
+                if (CacheHelper.Exists(cacheKey))
+                {
+                    batchList = CacheHelper.Get<List<ResponseGetBatchList_Dto>>(cacheKey);
+                }
+                else
+                {
+                    batchList = repositoryRealtimeAuth.GetBatchList(new RequestGetBatchList_Dto()
+                    {
+                        UploadDate = model.UploadDate
+                    });
+
+                    CacheHelper.Set(cacheKey, batchList);
+                }
+
+                //Func<ResponseGetBatchList_Dto, bool> predicate = (x =>
+                //    (!string.IsNullOrEmpty(model.TerminalID) ? x.TERMINAL_ID == model.TerminalID : true) &&
+                //    (!string.IsNullOrEmpty(model.UploadUser) ? x.UPLOAD_USER == model.UploadUser : true)
+                //);
+                //batchList = batchList.Where(predicate).ToList();
 
                 result = new Result()
                 {
@@ -213,13 +278,35 @@ namespace ToolsDev.LBTW.AuthSimulatorBackend.Controllers
         }
 
         [HttpPost]
-        public IHttpActionResult BatchFailDetails(RequestGetBatchFailDetailsModel request)
+        public IHttpActionResult BatchFailDetails(RequestGetBatchFailDetailsModel model)
         {
             Result result;
 
+            if (model == null)
+            {
+                return Ok(new Result()
+                {
+                    Success = false,
+                    ResultCode = "9999",
+                    ResultMsg = "request model null error"
+                });
+            }
+
             try
             {
-                var batchFailDetailList = repositoryRealtimeAuth.GetBatchFailDetails(request.BatchSeq);
+                string cacheKey = $"{batchFailDetailsCacheKey}{model.BatchSeq}";
+                var batchFailDetailList = new List<RealtimeAuthApi_Dto>();
+
+                if (CacheHelper.Exists(cacheKey))
+                {
+                    batchFailDetailList = CacheHelper.Get<List<RealtimeAuthApi_Dto>>(cacheKey);
+                }
+                else
+                {
+                    batchFailDetailList = repositoryRealtimeAuth.GetBatchFailDetails(model.BatchSeq);
+
+                    CacheHelper.Set(cacheKey, batchFailDetailList);
+                }
 
                 result = new Result()
                 {
@@ -279,6 +366,14 @@ namespace ToolsDev.LBTW.AuthSimulatorBackend.Controllers
             {
                 SeqList = model.SeqList
             });
+
+            CacheHelper.Remove(batchListCacheKey);
+            CacheHelper.RemoveKeysLike($"{batchListCacheKey}{DateTime.Now.ToString("yyyyMMdd")}");
+            foreach (var seq in model.SeqList)
+            {
+                CacheHelper.Remove($"{batchFailDetailsCacheKey}{seq}");
+            }
+
             return Ok(updateCnt);
         }
 
@@ -291,6 +386,11 @@ namespace ToolsDev.LBTW.AuthSimulatorBackend.Controllers
                 Memo = model.Memo,
                 DataCount = model.DataCount
             });
+
+            CacheHelper.Remove(batchListCacheKey);
+            CacheHelper.RemoveKeysLike($"{batchListCacheKey}{DateTime.Now.ToString("yyyyMMdd")}");
+            CacheHelper.Remove($"{batchFailDetailsCacheKey}{model.Seq}");
+
             return Ok(updateCnt);
         }
     }
